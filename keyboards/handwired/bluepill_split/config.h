@@ -66,8 +66,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 /* key matrix size */
 //  Modified by Xydane
-#define MATRIX_ROWS 6
-#define MATRIX_COLS 15
+#define MATRIX_ROWS 18
+#define MATRIX_ROWS_PER_SIDE (MATRIX_ROWS / 2)
+#define MATRIX_COLS 7
 #define DIODE_DIRECTION COL2ROW
 
 // Iso fix for Space Cadet, comment for ANSI layouts
