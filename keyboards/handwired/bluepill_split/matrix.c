@@ -1,225 +1,189 @@
-/*
-Copyright 2012 Jun Wako <wakojun@gmail.com>
-
-This program is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 2 of the License, or
-(at your option) any later version.
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
-
-#include "ch.h"
-#include "hal.h"
-
-/*
- * scan matrix
- */
-#include "print.h"
-#include "debug.h"
-#include "util.h"
-#include "matrix.h"
+#include <stdint.h>
+#include <stdbool.h>
+#include <string.h>
+#include <hal.h>
+#include "timer.h"
 #include "wait.h"
-
-//#include "pwm.c"
+#include "print.h"
+#include "matrix.h"
+#include "i2c_master.h"
+#include QMK_KEYBOARD_H
 
 #ifndef DEBOUNCE
-#   define DEBOUNCE 5
+#define DEBOUNCE 10
 #endif
-static uint8_t debouncing = DEBOUNCE;
 
-/* matrix state(1:on, 0:off) */
-static matrix_row_t matrix[MATRIX_ROWS];
-static matrix_row_t matrix_debouncing[MATRIX_ROWS];
+static uint8_t mcp23017_reset_loop = 0;
 
-static matrix_row_t read_cols(void);
+volatile matrix_row_t matrix[MATRIX_ROWS];
+volatile matrix_row_t raw_matrix[MATRIX_ROWS];
+volatile uint8_t debounce_matrix[MATRIX_ROWS * MATRIX_COLS];
+
+static matrix_row_t read_cols(uint8_t row);
+
 static void init_cols(void);
+
 static void unselect_rows(void);
+
 static void select_row(uint8_t row);
 
-inline uint8_t matrix_rows(void){
-  return MATRIX_ROWS;
+static void init_rows(void);
+
+__attribute__((weak)) void matrix_init_user(void) {}
+
+__attribute__((weak)) void matrix_scan_user(void) {}
+
+__attribute__((weak)) void matrix_init_kb(void) {
+  matrix_init_user();
 }
 
-inline uint8_t matrix_cols(void){
-  return MATRIX_COLS;
+__attribute__((weak)) void matrix_scan_kb(void) {
+  matrix_scan_user();
 }
 
-/* generic STM32F103C8T6 board */
-#ifdef BOARD_GENERIC_STM32_F103
-// This could be removed, only used now in matrix_init()
-#define LED_ON()    do { palClearPad(GPIOA, 1) ;} while (0)
-#define LED_OFF()   do { palSetPad(GPIOA, 1); } while (0)
-#endif
-
-__attribute__ ((weak))
-void matrix_init_kb(void) {
-    matrix_init_user();
-}
-
-__attribute__ ((weak))
-void matrix_scan_kb(void) {
-    matrix_scan_user();
-}
-
-__attribute__ ((weak))
-void matrix_init_user(void) {
-}
-
-__attribute__ ((weak))
-void matrix_scan_user(void) {
-}
-
-void matrix_init(void)
-{
-  // initialize row and col
+void matrix_init(void) {
+  mcp23017_status = init_mcp23017();
+  (void) mcp23017_reset_loop;
+  init_rows();
   unselect_rows();
   init_cols();
-  // initialize matrix state: all keys off
-  for (uint8_t i=0; i < MATRIX_ROWS; i++) {
-    matrix[i] = 0;
-    matrix_debouncing[i] = 0;
-  }
-  //debug
-  debug_matrix = true;
-  LED_ON();
-  wait_ms(500);
-  LED_OFF();
 
+
+  for (uint8_t i = 0; i < MATRIX_ROWS; i++) {
+    matrix[i] = 0;
+    raw_matrix[i] = 0;
+    for (uint8_t j = 0; j < MATRIX_COLS; ++j) {
+      debounce_matrix[i * MATRIX_COLS + j] = 0;
+    }
+  }
   matrix_init_quantum();
 }
 
-uint8_t matrix_scan(void){
+void matrix_power_up(void) {
+  mcp23017_status = init_mcp23017();
+
+  init_rows();
+  unselect_rows();
+  init_cols();
+
   for (uint8_t i = 0; i < MATRIX_ROWS; i++) {
-    select_row(i);
-    wait_us(30);  // without this wait read unstable value.
-    matrix_row_t cols = read_cols();
-    if (matrix_debouncing[i] != cols) {
-      matrix_debouncing[i] = cols;
-      if (debouncing) {
-        debug("bounce!: "); debug_hex(debouncing); debug("\n");
-      }
-    debouncing = DEBOUNCE;
+    matrix[i] = 0;
+  }
+}
+
+matrix_row_t debounce_mask(matrix_row_t rawcols, uint8_t row) {
+  matrix_row_t result = 0;
+  matrix_row_t change = rawcols ^raw_matrix[row];
+  raw_matrix[row] = rawcols;
+  for (uint8_t i = 0; i < MATRIX_COLS; ++i) {
+    if (debounce_matrix[row * MATRIX_COLS + i]) {
+      --debounce_matrix[row * MATRIX_COLS + i];
+    } else {
+      result |= (1 << i);
     }
+    if (change & (1 << i)) {
+      debounce_matrix[row * MATRIX_COLS + i] = DEBOUNCE;
+    }
+  }
+  return result;
+}
+
+matrix_row_t debounce_read_cols(uint8_t row) {
+  // Read the row without debouncing filtering and store it for later usage.
+  matrix_row_t cols = read_cols(row);
+  // Get the Debounce mask.
+  matrix_row_t mask = debounce_mask(cols, row);
+  // debounce the row and return the result.
+  return (cols & mask) | (matrix[row] & ~mask);;
+}
+
+uint8_t matrix_scan(void) {
+  if (mcp23017_status) {
+    if (++mcp23017_reset_loop == 0) {
+      mcp23017_status = init_mcp23017();
+        if (!mcp23017_status) {
+            split_blink_all_leds();
+        }
+    }
+  }
+  for (uint8_t i = 0; i < MATRIX_ROWS_PER_SIDE; i++) {
+    select_row(i);
+    select_row(i + MATRIX_ROWS_PER_SIDE);
+
+    matrix[i] = debounce_read_cols(i);
+    matrix[i + MATRIX_ROWS_PER_SIDE] = debounce_read_cols(i + MATRIX_ROWS_PER_SIDE);
+
     unselect_rows();
   }
-
-  if (debouncing) {
-    if (--debouncing) {
-      wait_ms(1);
-    } else {
-      for (uint8_t i = 0; i < MATRIX_ROWS; i++) {
-        matrix[i] = matrix_debouncing[i];
-      }
-    }
-  }
   matrix_scan_quantum();
-  return 1;
+  return 0;
 }
 
-inline bool matrix_is_on(uint8_t row, uint8_t col){
-  return (matrix[row] & ((matrix_row_t)1<<col));
+bool matrix_is_modified(void) {
+  return true;
 }
 
-inline matrix_row_t matrix_get_row(uint8_t row){
+inline
+bool matrix_is_on(uint8_t row, uint8_t col) {
+  return (matrix[row] & (1 << col));
+}
+
+inline
+matrix_row_t matrix_get_row(uint8_t row) {
   return matrix[row];
 }
 
-void matrix_print(void){
-  print("\nr/c 0123456789ABCDEF\n");
-  for (uint8_t row = 0; row < MATRIX_ROWS; row++) {
-    phex(row); print(": ");
-    pbin_reverse16(matrix_get_row(row));
-    print("\n");
+void matrix_print(void) {
+}
+
+static matrix_row_t read_cols(uint8_t row) {
+  if (row < MATRIX_ROWS_PER_SIDE) {
+    uint8_t data = 0xFF;
+    if (!mcp23017_status) {
+      uint8_t regAddr = I2C_GPIOB;
+      mcp23017_status = i2c_readReg(I2C_ADDR, regAddr, &data, 1, 10);
+    }
+    if (mcp23017_status) {
+      return 0;
+    }
+    return (~data) & 0x3F;
+  } else {
+      uint8_t data_p = (GPIOB -> IDR);
+      uint8_t data = data_p;
+    return ((~data) & 0x3f);
   }
 }
 
-/* Column pin configuration
- */
-//  Modified by Xydane
-static void  init_cols(void){
-  palSetPadMode(GPIOA, 5, PAL_MODE_INPUT_PULLUP);
-  palSetPadMode(GPIOA, 15, PAL_MODE_INPUT_PULLUP);
-  palSetPadMode(GPIOA, 10, PAL_MODE_INPUT_PULLUP);
-  palSetPadMode(GPIOA, 9, PAL_MODE_INPUT_PULLUP);
-  palSetPadMode(GPIOA, 8, PAL_MODE_INPUT_PULLUP);
-  palSetPadMode(GPIOB, 15, PAL_MODE_INPUT_PULLUP);
-  palSetPadMode(GPIOB, 14, PAL_MODE_INPUT_PULLUP);
-  palSetPadMode(GPIOB, 13, PAL_MODE_INPUT_PULLUP);
-  palSetPadMode(GPIOB, 12, PAL_MODE_INPUT_PULLUP);
-  palSetPadMode(GPIOB, 11, PAL_MODE_INPUT_PULLUP);
-  palSetPadMode(GPIOB, 10, PAL_MODE_INPUT_PULLUP);
-  palSetPadMode(GPIOB, 1, PAL_MODE_INPUT_PULLUP);
+static void init_cols(void) {
   palSetPadMode(GPIOB, 0, PAL_MODE_INPUT_PULLUP);
-  palSetPadMode(GPIOA, 7, PAL_MODE_INPUT_PULLUP);
-  palSetPadMode(GPIOA, 6, PAL_MODE_INPUT_PULLUP);
+  palSetPadMode(GPIOB, 1, PAL_MODE_INPUT_PULLUP);
+  palSetPadMode(GPIOB, 2, PAL_MODE_INPUT_PULLUP);
+  palSetPadMode(GPIOB, 3, PAL_MODE_INPUT_PULLUP);
+  palSetPadMode(GPIOB, 4, PAL_MODE_INPUT_PULLUP);
+  palSetPadMode(GPIOB, 5, PAL_MODE_INPUT_PULLUP);
 }
 
-/* Returns status of switches(1:on, 0:off) */
-//  Modified by Xydane
-static matrix_row_t read_cols(void){
-  return ((palReadPad(GPIOA, 5)==PAL_HIGH) ? 0 : (1<<0))
-    | ((palReadPad(GPIOA, 15)==PAL_HIGH) ? 0 : (1<<1))
-    | ((palReadPad(GPIOA, 10)==PAL_HIGH) ? 0 : (1<<2))
-    | ((palReadPad(GPIOA, 9)==PAL_HIGH) ? 0 : (1<<3))
-    | ((palReadPad(GPIOA, 8)==PAL_HIGH) ? 0 : (1<<4))
-    | ((palReadPad(GPIOB, 15)==PAL_HIGH) ? 0 : (1<<5))
-    | ((palReadPad(GPIOB, 14)==PAL_HIGH) ? 0 : (1<<6))
-    | ((palReadPad(GPIOB, 13)==PAL_HIGH) ? 0 : (1<<7))
-    | ((palReadPad(GPIOB, 12)==PAL_HIGH) ? 0 : (1<<8))
-    | ((palReadPad(GPIOB, 11)==PAL_HIGH) ? 0 : (1<<9))
-    | ((palReadPad(GPIOB, 10)==PAL_HIGH) ? 0 : (1<<10))
-    | ((palReadPad(GPIOB, 1)==PAL_HIGH) ? 0 : (1<<11))
-    | ((palReadPad(GPIOB, 0)==PAL_HIGH) ? 0 : (1<<12))
-    | ((palReadPad(GPIOA, 7)==PAL_HIGH) ? 0 : (1<<13))
-    | ((palReadPad(GPIOA, 6)==PAL_HIGH) ? 0 : (1<<14));
+static void init_rows(void) {
+  palSetPadMode(GPIOB, 8, PAL_MODE_OUTPUT_PUSHPULL);
+  palSetPadMode(GPIOB, 9, PAL_MODE_OUTPUT_PUSHPULL);
+  palSetPadMode(GPIOB, 10, PAL_MODE_OUTPUT_PUSHPULL);
+  palSetPadMode(GPIOB, 11, PAL_MODE_OUTPUT_PUSHPULL);
+  palSetPadMode(GPIOB, 12, PAL_MODE_OUTPUT_PUSHPULL);
+  palSetPadMode(GPIOB, 13, PAL_MODE_OUTPUT_PUSHPULL);
+  palSetPadMode(GPIOB, 14, PAL_MODE_OUTPUT_PUSHPULL);
 }
 
-/* Row pin configuration
- */
-//  Modified by Xydane
-static void unselect_rows(void){
-  palSetPadMode(GPIOB, 9, PAL_MODE_INPUT);
-  palSetPadMode(GPIOB, 8, PAL_MODE_INPUT);
-  palSetPadMode(GPIOB, 7, PAL_MODE_INPUT);
-  palSetPadMode(GPIOB, 6, PAL_MODE_INPUT);
-  palSetPadMode(GPIOB, 5, PAL_MODE_INPUT);
-  palSetPadMode(GPIOA, 4, PAL_MODE_INPUT);
+static void unselect_rows(void) {
+  GPIOB->BSRR = 0b1111111 << 8;
 }
 
-//  Modified by Xydane
-static void select_row(uint8_t row){
-  (void)row;
-  switch (row) {
-    case 0:
-      palSetPadMode(GPIOB, 9, PAL_MODE_OUTPUT_PUSHPULL);
-      palClearPad(GPIOB, 9);
-      break;
-    case 1:
-      palSetPadMode(GPIOB, 8, PAL_MODE_OUTPUT_PUSHPULL);
-      palClearPad(GPIOB, 8);
-      break;
-    case 2:
-      palSetPadMode(GPIOB, 7, PAL_MODE_OUTPUT_PUSHPULL);
-      palClearPad(GPIOB, 7);
-      break;
-    case 3:
-      palSetPadMode(GPIOB, 6, PAL_MODE_OUTPUT_PUSHPULL);
-      palClearPad(GPIOB, 6);
-      break;
-    case 4:
-      palSetPadMode(GPIOB, 5, PAL_MODE_OUTPUT_PUSHPULL);
-      palClearPad(GPIOB, 5);
-      break;
-    case 5:
-      palSetPadMode(GPIOA, 4, PAL_MODE_OUTPUT_PUSHPULL);
-      palClearPad(GPIOA, 4);
-      break;
+static void select_row(uint8_t row) {
+  if (row < MATRIX_ROWS_PER_SIDE) {
+    if (!mcp23017_status) {
+      uint8_t data = (0xFF & ~(1 << row));
+      mcp23017_status = i2c_writeReg(I2C_ADDR, I2C_GPIOA, &data, 1, 10);
+    }
+  } else {
+    GPIOB->BRR = 0x1 << (row+1);
   }
 }

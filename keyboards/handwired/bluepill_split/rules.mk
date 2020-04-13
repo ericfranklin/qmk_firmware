@@ -16,3 +16,5 @@ OPT_DEFS += -DCORTEX_ENABLE_WFI_IDLE=TRUE
 # project specific files
 SRC = matrix.c \
       led.c
+
+QUANTUM_LIB_SRC += i2c_master.c
