@@ -21,7 +21,7 @@
  * Board identifier.
  */
 #define BOARD_JM60
-#define BOARD_NAME              "ErgoDox STM32 Keyboard"
+#define BOARD_NAME              "Frank STM32 Keyboard"
 
 /*
  * Board frequencies.

@@ -17,13 +17,13 @@
 #define I2C_GPPUA 0x0C
 #define I2C_GPPUB 0x0D
 
-inline void ergodox_board_led_1_on(void) { palSetPad(GPIOA, 10); }
-inline void ergodox_board_led_2_on(void) { palSetPad(GPIOA, 9); }
-inline void ergodox_board_led_3_on(void) { palSetPad(GPIOA, 8); }
-inline void ergodox_board_led_1_off(void) { palClearPad(GPIOA, 10); }
-inline void ergodox_board_led_2_off(void) { palClearPad(GPIOA, 9); }
-inline void ergodox_board_led_3_off(void) { palClearPad(GPIOA, 8); }
-inline void ergodox_led_all_off(void)
+inline void frank_board_led_1_on(void) { palSetPad(GPIOA, 10); }
+inline void frank_board_led_2_on(void) { palSetPad(GPIOA, 9); }
+inline void frank_board_led_3_on(void) { palSetPad(GPIOA, 8); }
+inline void frank_board_led_1_off(void) { palClearPad(GPIOA, 10); }
+inline void frank_board_led_2_off(void) { palClearPad(GPIOA, 9); }
+inline void frank_board_led_3_off(void) { palClearPad(GPIOA, 8); }
+inline void frank_led_all_off(void)
 {
   palClearPad(GPIOA, 10);
   palClearPad(GPIOA, 9);
@@ -34,13 +34,13 @@ extern volatile int mcp23017_status;
 
 uint8_t init_mcp23017(void);
 
-void ergodox_blink_all_leds(void);
+void frank_blink_all_leds(void);
 
 /*
  *   LEFT HAND: LINES 115-122
  *  RIGHT HAND: LINES 124-131
  */
-#define LAYOUT_ergodox(                     \
+#define LAYOUT_frank(                     \
                                             \
     k00, k01, k02, k03, k04, k05, k06,      \
     k10, k11, k12, k13, k14, k15, k16,      \
@@ -82,7 +82,7 @@ void ergodox_blink_all_leds(void);
   }
 
 /*  ---------- LEFT HAND -----------   ---------- RIGHT HAND ---------- */
-#define LAYOUT_ergodox_pretty(                                            \
+#define LAYOUT_frank_pretty(                                            \
     L00, L01, L02, L03, L04, L05, L06, R00, R01, R02, R03, R04, R05, R06, \
     L10, L11, L12, L13, L14, L15, L16, R10, R11, R12, R13, R14, R15, R16, \
     L20, L21, L22, L23, L24, L25, R21, R22, R23, R24, R25, R26,           \

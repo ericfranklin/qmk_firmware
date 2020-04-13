@@ -1,13 +1,13 @@
 #include "i2c_master.h"
 #include QMK_KEYBOARD_H
 
-extern inline void ergodox_board_led_1_on(void);
-extern inline void ergodox_board_led_2_on(void);
-extern inline void ergodox_board_led_3_on(void);
-extern inline void ergodox_board_led_1_off(void);
-extern inline void ergodox_board_led_2_off(void);
-extern inline void ergodox_board_led_3_off(void);
-extern inline void ergodox_led_all_off(void);
+extern inline void frank_board_led_1_on(void);
+extern inline void frank_board_led_2_on(void);
+extern inline void frank_board_led_3_on(void);
+extern inline void frank_board_led_1_off(void);
+extern inline void frank_board_led_2_off(void);
+extern inline void frank_board_led_3_off(void);
+extern inline void frank_led_all_off(void);
 
 volatile int mcp23017_status = 0x20;
 uint8_t i2c_initializied = 0;
@@ -19,26 +19,26 @@ void matrix_init_kb(void)
     palSetPadMode(GPIOA, 9, PAL_MODE_OUTPUT_PUSHPULL); // LED 2
     palSetPadMode(GPIOA, 8, PAL_MODE_OUTPUT_PUSHPULL); // LED 3
 
-    ergodox_blink_all_leds();
+    frank_blink_all_leds();
 
     matrix_init_user();
 }
 
-void ergodox_blink_all_leds(void)
+void frank_blink_all_leds(void)
 {
-    ergodox_led_all_off();
-    // ergodox_led_all_set(LED_BRIGHTNESS_DEFAULT);
-    ergodox_board_led_1_on();
+    frank_led_all_off();
+    // frank_led_all_set(LED_BRIGHTNESS_DEFAULT);
+    frank_board_led_1_on();
     wait_ms(50);
-    ergodox_board_led_2_on();
+    frank_board_led_2_on();
     wait_ms(50);
-    ergodox_board_led_3_on();
+    frank_board_led_3_on();
     wait_ms(50);
-    ergodox_board_led_1_off();
+    frank_board_led_1_off();
     wait_ms(50);
-    ergodox_board_led_2_off();
+    frank_board_led_2_off();
     wait_ms(50);
-    ergodox_board_led_3_off();
+    frank_board_led_3_off();
 }
 
 uint8_t init_mcp23017(void) {

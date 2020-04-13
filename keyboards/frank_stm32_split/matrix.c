@@ -9,6 +9,10 @@
 #include "i2c_master.h"
 #include QMK_KEYBOARD_H
 
+
+extern volatile int mcp23017_status;
+
+
 #ifndef DEBOUNCE
 #define DEBOUNCE 10
 #endif
