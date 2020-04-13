@@ -7,4 +7,12 @@ NKRO_ENABLE = yes	    # USB Nkey Rollover
 CUSTOM_MATRIX = yes 	# Custom matrix file
 MOUSEKEY_ENABLE = no
 
-DEFAULT_FOLDER = handwired/bluepill_split/bluepill70
+# MCU name
+MCU = STM32F103
+
+# Enter lower-power sleep mode when on the ChibiOS idle thread
+OPT_DEFS += -DCORTEX_ENABLE_WFI_IDLE=TRUE
+
+# project specific files
+SRC = matrix.c \
+      led.c
