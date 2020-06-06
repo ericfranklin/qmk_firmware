@@ -46,20 +46,18 @@ void split_blink_all_leds(void);
 		K30, K31, K32, K33, K34, K35, K36, K37, \
 		K40, K41, K42, K43, K44, K45, K46, K47, \
 		K50, K51, K52, K53, K54, K55, K56, K57, \
-		K60, K61, K62,      K64,      K66, K67 ) \
+		K60, K61, K62,           K65, K66, K67 ) \
 												\
 												\
 												\
 /* matrix positions each row below is a column on the keyboard */  	\
 	{																\
-		{K00, 	K10, 	K20, 	K30, 	K40, 	K50, 	K60		},	\
-		{K01, 	K11, 	K21, 	K31, 	K41, 	K51, 	K61		},	\
-		{K02, 	K12, 	K22, 	K32, 	K42, 	K52, 	K62		},	\
-		{K03, 	K13, 	K23, 	K33, 	K43, 	K53,	KC_NO	},	\
-		{K04, 	K14, 	K24, 	K34, 	K44, 	K54, 	K64		},	\
-		{K05, 	K15, 	K25, 	K35, 	K45, 	K55, 	KC_NO	},	\
-		{K06, 	K16, 	K26, 	K36, 	K46, 	K56, 	K66		},	\
-		{KC_NO, KC_NO, 	KC_NO, 	K37, 	K47, 	K57, 	K67		},	\
-		{KC_NO, KC_NO, 	KC_NO, 	KC_NO, 	KC_NO, 	KC_NO, 	KC_NO	}	\
+	{K00, 	K01, 	K02, 	K03, 	K04, 	K05, 	K06, 	KC_NO},	\
+	{K10, 	K11, 	K12, 	K13, 	K14, 	K15, 	K16, 	KC_NO},	\
+	{K20, 	K21, 	K22, 	K23, 	K24, 	K25, 	K26, 	KC_NO},	\
+	{K30, 	K31, 	K32, 	K33, 	K34, 	K35, 	K36, 	K37},	\
+	{K40, 	K41, 	K42, 	K43, 	K44, 	K45, 	K46, 	K47},	\
+	{K50, 	K51, 	K52, 	K53, 	K54, 	K55, 	K56, 	K57},	\
+	{K60, 	K61, 	K62, 	KC_NO, 	KC_NO, 	K65, 	K66, 	K67}	\
 	}
 

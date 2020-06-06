@@ -55,7 +55,7 @@ void boardInit(void) {
 }
 
 
-void boardResetToBootloader(void){
+void shutdown_user(void){
 	   //Set backup register DR10 to enter bootloader on reset
 	   BKP->DR10 = RTC_BOOTLOADER_FLAG;
 	   // Reset board
