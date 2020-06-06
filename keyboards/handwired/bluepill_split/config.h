@@ -66,8 +66,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 /* key matrix size */
 //  Modified by Frank
-#define MATRIX_ROWS 18
-#define MATRIX_ROWS_PER_SIDE (MATRIX_ROWS / 2)
+#define MATRIX_ROWS 9
+//#define MATRIX_ROWS_PER_SIDE (MATRIX_ROWS / 2)
 #define MATRIX_COLS 7
 #define DIODE_DIRECTION COL2ROW
 
