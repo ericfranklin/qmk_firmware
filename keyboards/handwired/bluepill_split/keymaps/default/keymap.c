@@ -22,7 +22,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define _FNONE 1
 #define _FNTWO 2
 
-// Highly Modified by Xydane
+// Highly Modified by Frank
 const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 	[_NORMAL] = LAYOUT_bluepill_split( \
 		/*	1			2			3			4			5			6			7			8			9 */		\

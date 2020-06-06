@@ -65,7 +65,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define DESCRIPTION "QMK keyboard firmware with ChibiOS"
 
 /* key matrix size */
-//  Modified by Xydane
+//  Modified by Frank
 #define MATRIX_ROWS 18
 #define MATRIX_ROWS_PER_SIDE (MATRIX_ROWS / 2)
 #define MATRIX_COLS 7

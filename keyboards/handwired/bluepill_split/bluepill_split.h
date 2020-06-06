@@ -18,12 +18,16 @@
 
 extern volatile int mcp23017_status;
 
-uint8_t init_mcp23017(void);
+uint8_t init_mcp23017(bool leftHandSide);
 
 
 /********************************************************************************/
 /*	LED handling																*/
 /********************************************************************************/
+
+inline void ergodox_board_led_1_on(void) { palSetPad(GPIOC, 13); }
+inline void ergodox_board_led_1_off(void) { palClearPad(GPIOC, 13); }
+
 void split_blink_all_leds(void);
 
 

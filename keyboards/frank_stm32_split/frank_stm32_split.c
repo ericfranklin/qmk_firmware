@@ -47,6 +47,7 @@ uint8_t init_mcp23017(void) {
         i2c_initializied = 1;
     }
 
+
     uint8_t data[2];
     data[0] = 0x0;
     data[1] = 0b00111111;
@@ -60,6 +61,6 @@ uint8_t init_mcp23017(void) {
 
  out:
     return mcp23017_status;
-    // i2c_readReg(I2C_ADDR, );
+     //i2c_readReg(I2C_ADDR, );
 }
 
