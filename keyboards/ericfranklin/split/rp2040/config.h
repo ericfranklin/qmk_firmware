@@ -19,12 +19,13 @@
 
 /* Key matrix configuration. */
 #define MATRIX_ROW_PINS \
-    { GP29, GP26, GP5, GP4, GP9 }
+    { GP28, GP27, GP21, GP20, GP19, GP18, GP17 }
 #define MATRIX_COL_PINS \
-    { GP27, GP28, GP21, GP6, GP7, GP8 }
+    { GP8, GP9, GP10, GP11, GP12, GP13, GP14, GP15 }
 
 /* Handedness. */
 #define MASTER_RIGHT
+#define SPLIT_HAND_PIN GP26
 
 // To use the handedness pin, resistors need to be installed on the adapter PCB.
 // If so, uncomment the following code, and undefine MASTER_RIGHT above.
@@ -38,3 +39,4 @@
 #define RP2040_BOOTLOADER_DOUBLE_TAP_RESET
 #define RP2040_BOOTLOADER_DOUBLE_TAP_RESET_LED GP17
 #define RP2040_BOOTLOADER_DOUBLE_TAP_RESET_TIMEOUT 1000U
+
