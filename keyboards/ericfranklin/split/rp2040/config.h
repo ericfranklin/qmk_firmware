@@ -24,7 +24,8 @@
     { GP8, GP9, GP10, GP11, GP12, GP13, GP14, GP15 }
 
 /* Handedness. */
-#define MASTER_RIGHT
+// #define MASTER_RIGHT
+#define MASTER_LEFT
 #define SPLIT_HAND_PIN GP26
 
 // To use the handedness pin, resistors need to be installed on the adapter PCB.
@@ -33,10 +34,21 @@
 // #define SPLIT_HAND_PIN_LOW_IS_LEFT  // High -> right, Low -> left.
 
 /* RGB settings. */
-#define RGB_DI_PIN GP0
+// #define RGB_DI_PIN GP0
 
 /* Reset. */
-#define RP2040_BOOTLOADER_DOUBLE_TAP_RESET
-#define RP2040_BOOTLOADER_DOUBLE_TAP_RESET_LED GP17
-#define RP2040_BOOTLOADER_DOUBLE_TAP_RESET_TIMEOUT 1000U
+// #define RP2040_BOOTLOADER_DOUBLE_TAP_RESET
+// #define RP2040_BOOTLOADER_DOUBLE_TAP_RESET_LED GP17
+// #define RP2040_BOOTLOADER_DOUBLE_TAP_RESET_TIMEOUT 1000U
 
+#define SERIAL_USART_FULL_DUPLEX   // Enable full duplex operation mode.
+#define SERIAL_USART_TX_PIN GP4     // USART TX pin
+#define SERIAL_USART_RX_PIN GP5     // USART RX pin
+
+// #define SPLIT_LAYER_STATE_ENABLE
+
+#define BOOTMAGIC_LITE_ROW 0
+#define BOOTMAGIC_LITE_COLUMN 6
+
+#define BOOTMAGIC_LITE_ROW_RIGHT  7
+#define BOOTMAGIC_LITE_COLUMN_RIGHT  6
